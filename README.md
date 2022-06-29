@@ -19,4 +19,9 @@ Do the following in your onEnable():
 WorldUtils.setPlugin(this);
 WorldUtils.registerWorldInitListener();
 ```
-This will register a listener that listens for WorldInitEvent, and disables keepSpawnInMemory to optimize loading times further.
+This will register a listener that listens for WorldInitEvent, and disables keepSpawnInMemory to optimize loading times further. Now, for copying a template world, it's just a matter of:
+```
+WorldUtils.copyAndLoadWorld("template", "id1").thenAccept(success -> {
+    // processing code
+});
+```
