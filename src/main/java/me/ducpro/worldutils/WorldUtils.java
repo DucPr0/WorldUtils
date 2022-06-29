@@ -4,6 +4,7 @@ import org.apache.commons.io.FileUtils;
 
 import org.bukkit.Bukkit;
 import org.bukkit.WorldCreator;
+import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.world.WorldInitEvent;
 import org.bukkit.plugin.Plugin;
@@ -27,9 +28,12 @@ public class WorldUtils {
 
     public static void registerWorldInitListener() {
         plugin.getServer().getPluginManager().registerEvents(new Listener() {
+            @EventHandler
             public void onWorldInit(WorldInitEvent event) {
-                if (disableKeepSpawnWorlds.contains(event.getWorld().getName()))
+                if (disableKeepSpawnWorlds.contains(event.getWorld().getName())) {
                     event.getWorld().setKeepSpawnInMemory(false);
+                    disableKeepSpawnWorlds.remove(event.getWorld().getName());
+                }
             }
         }, plugin);
     }
