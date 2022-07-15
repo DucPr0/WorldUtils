@@ -1,7 +1,5 @@
 package me.ducpro.worldutils;
 
-import org.apache.commons.io.FileUtils;
-
 import org.bukkit.Bukkit;
 import org.bukkit.WorldCreator;
 import org.bukkit.event.EventHandler;
@@ -12,10 +10,14 @@ import org.bukkit.scheduler.BukkitRunnable;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Predicate;
 import java.util.logging.Level;
 
 public class WorldUtils {
@@ -45,7 +47,7 @@ public class WorldUtils {
             @Override
             public void run() {
                 try {
-                    FileUtils.copyDirectory(originalDirectory, newDirectory, file -> !noCopy.contains(file.getName()));
+                    WorldUtils.copyDirectory(originalDirectory, newDirectory, file -> !noCopy.contains(file.getName()));
                 } catch (IOException exception) {
                     result.complete(false);
                     exception.printStackTrace();
@@ -92,7 +94,7 @@ public class WorldUtils {
             @Override
             public void run() {
                 try {
-                    FileUtils.deleteDirectory(directory);
+                    WorldUtils.deleteDirectory(directory);
                     result.complete(true);
                 } catch (IOException exception) {
                     result.complete(false);
@@ -111,5 +113,37 @@ public class WorldUtils {
         }
         var worldDirectory = new File(Bukkit.getWorldContainer(), worldName);
         return removeWorldFolderAsync(worldDirectory);
+    }
+
+    public static void deleteDirectory(File directory) throws IOException {
+        try (var walk = Files.walk(directory.toPath())) {
+            walk.sorted(Comparator.reverseOrder()).forEachOrdered(path -> {
+                try {
+                    Files.delete(path);
+                } catch (IOException exception) {
+                    exception.printStackTrace();
+                }
+            });
+        }
+    }
+
+    public static void copyDirectory(File srcDirectory, File destDirectory) throws IOException {
+        WorldUtils.copyDirectory(srcDirectory, destDirectory, file -> true);
+    }
+
+    public static void copyDirectory(File srcDirectory, File destDirectory, Predicate<File> filter) throws IOException {
+        try (var walk = Files.walk(srcDirectory.toPath())) {
+            walk.forEachOrdered(src -> {
+                if (filter.test(src.toFile())) {
+                    try {
+                        Files.copy(src,
+                                destDirectory.toPath().resolve(srcDirectory.toPath().relativize(src)),
+                                StandardCopyOption.REPLACE_EXISTING);
+                    } catch (IOException exception) {
+                        exception.printStackTrace();
+                    }
+                }
+            });
+        }
     }
 }
